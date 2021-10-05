@@ -6,10 +6,10 @@ const CLIENT_VERSION = {
   patch: 0,
 };
 
-const SUPPORTED_ARCHIPELAGO_VERSION = {
+const ARCHIPELAGO_PROTOCOL_VERSION = {
   major: 0,
   minor: 1,
-  build: 8,
+  build: 9,
   class: 'Version',
 };
 
@@ -26,32 +26,14 @@ let playerTeam = null;
 let players = [];
 let hintCost = null;
 
-// Location and item maps, populated from localStorage
-let itemsById = {};
+// Object mapping AP itemIds to their names
+const apItemsById = {};
 
-// Object matting locationId to locationName
-let locationMap = {};
-
-// Prebuilt maps of item/location data to prevent doing work more than once
-const locationsById = {
-  underworld: {},
-  overworld: {},
-  npc: {},
-  misc: {},
-};
-const locationsByRoomId = {
-  underworld: {},
-  overworld: {},
-  npc: {},
-  misc: {},
-};
+// Object mapping AP locationIds to their names
+const apLocationsById = {};
 
 // Data shared between main and renderer processes
 let sharedData = {};
 
 // The user has the option to pause receiving items
 let receiveItems = true;
-
-// For those who hate shields
-const shieldNames = ['Blue Shield', 'Red Shield', 'Mirror Shield', 'Progressive Shield'];
-let receiveShields = true;
