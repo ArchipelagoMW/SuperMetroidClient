@@ -199,35 +199,43 @@ const connectToServer = (address, password = null) => {
               const newLocationChecks = [];
 
               // Fetch item information for each location check not yet acknowledged by the client and report it
-              // to the AP server
+              // to the AP server. Each item entry is eight bytes long.
               for (let index = checkArrayIndex; index < checkArrayLength; index++) {
                 const itemAddressOffset = index * 8; // Each entry in the array is eight bytes long
                 const itemData = await readFromAddress(RECV_PROGRESS_ADDR + 0x700 + itemAddressOffset, 8);
-                // const worldId = itemData[0] | (itemData[1] << 8);
-                // const itemId = itemData[2] | (itemData[3] << 8);
-                const itemIndex = (itemData[4] | (itemData[5] << 8)) >> 3;
-                // TODO: Ask lordlou what is stored in indexes 7 and 8
 
-                // TODO: Ask lordlou about AP location index reservation
+                // worldId is only relevant to the ROM internally. It will contain 0 if the item is for the
+                // local player, and 1 if the item is for someone else. It is used to determine which text
+                // box the game displays for item pickup.
+                // const worldId = itemData[0] | (itemData[1] << 8);
+
+                // itemId is only relevant to the ROM internally. Its value maps to a Super Metroid item type
+                // or a single value which is incremented each time the client receives an item. It is used to
+                // determine the item type text printed in the text box for item pickup.
+                // const itemId = itemData[2] | (itemData[3] << 8); // Only relevant to the ROM
+
+                // itemIndex is the index of the relevant item in the ROM's internal array of checked locations
+                const itemIndex = (itemData[4] | (itemData[5] << 8)) >> 3;
+
+                // itemData[7] and itemData[8] are always empty bytes. They are reserved for future use.
+
+                // Add the AP locationId to the array of new location checks to be sent to the AP server
                 newLocationChecks.push(LOCATIONS_START_ID + itemIndex);
               }
 
               // If new locations have been checked, send those checks to the AP server
               if (newLocationChecks.length > 0) {
                 if (serverSocket && serverSocket.readyState === WebSocket.OPEN) {
-                  serverSocket.send(JSON.stringify([{
-                    cmd: 'LocationChecks',
-                    locations: newLocationChecks,
-                  }]));
-                }
+                  sendLocationChecks(newLocationChecks);
 
-                // Update the ROM with the index of the item which has been acknowledged by the client
-                const indexUpdateData = new Uint8Array(2);
-                indexUpdateData.set([
-                  (checkedLocations - 1) & 0xFF,
-                  ((checkedLocations - 1) >> 8) & 0xFF,
-                ]);
-                await writeToAddress(RECV_PROGRESS_ADDR + 0x680, indexUpdateData);
+                  // Update the ROM with the index of the latest item which has been acknowledged by the client
+                  const indexUpdateData = new Uint8Array(2);
+                  indexUpdateData.set([
+                    (checkArrayIndex + newLocationChecks.length) & 0xFF,
+                    ((checkArrayIndex + newLocationChecks.length) >> 8) & 0xFF,
+                  ]);
+                  await writeToAddress(RECV_PROGRESS_ADDR + 0x680, indexUpdateData);
+                }
               }
 
               // If the client is currently accepting items, send those items to the ROM
@@ -237,7 +245,30 @@ const connectToServer = (address, password = null) => {
                 const receivedItemCount = receivedItemData[2] | (receivedItemData[3] << 8);
 
                 if (receivedItemCount < itemsReceived.length) {
-                  // TODO: Write logic for sending pending items to the ROM
+                  // Calculate itemId
+                  const itemId = itemsReceived[receivedItemCount].item - ITEMS_START_ID;
+
+                  // In the ROM, "Archipelago" is appended to the list of players, so it is the last entry in the array
+                  const playerId = itemsReceived[receivedItemCount].player === 0 ?
+                    players.length - 1 :
+                    itemsReceived[receivedItemCount].player - 1;
+
+                  // Send newly acquired item data to the ROM
+                  const itemPayload = new Uint8Array(4);
+                  itemPayload.set([
+                    playerId & 0xFF,
+                    (playerId >> 8) & 0xFF,
+                    itemId & 0xFF,
+                    (itemId >> 8) & 0xFF,
+                  ]);
+                  await writeToAddress(RECV_PROGRESS_ADDR + (receivedItemCount * 4), itemPayload);
+
+                  const itemCountPayload = new Uint8Array(2);
+                  itemCountPayload.set([
+                    (receivedItemCount + 1) & 0xFF,
+                    ((receivedItemCount + 1) >> 8) & 0xFF,
+                  ]);
+                  await writeToAddress(RECV_PROGRESS_ADDR + 0x602, itemCountPayload);
                 }
               }
 
@@ -455,102 +486,5 @@ const sendLocationChecks = (locationIds) => {
 };
 
 const buildItemAndLocationData = (dataPackage) => {
-  itemsById = {};
-  const locationMap = {};
-  Object.keys(dataPackage.games).forEach((gameName) => {
-    Object.keys(dataPackage.games[gameName].item_name_to_id).forEach((itemName) => {
-      itemsById[dataPackage.games[gameName].item_name_to_id[itemName]] = itemName;
-    });
-
-    Object.keys(dataPackage.games[gameName].location_name_to_id).forEach((locationName) => {
-      locationMap[dataPackage.games[gameName].location_name_to_id[locationName]] = locationName;
-    });
-  });
-  buildLocationData(locationMap);
-};
-
-/**
- * Build two global objects which are used to reference location data
- * @param locations An object of { locationId: locationName, ... }
- */
-const buildLocationData = (locations) => {
-  locationMap = locations;
-  const locationIds = Object.keys(locations);
-  const locationNames = Object.values(locations);
-
-  Object.keys(UNDERWORLD_LOCATIONS).forEach((uwLocationName) => {
-    locationsById['underworld'][locationIds[locationNames.indexOf(uwLocationName)]] = {
-      name: uwLocationName,
-      locationId: Number(locationIds[locationNames.indexOf(uwLocationName)]),
-      roomId: UNDERWORLD_LOCATIONS[uwLocationName][0],
-      mask: UNDERWORLD_LOCATIONS[uwLocationName][1],
-    }
-
-    if (!locationsByRoomId['underworld'].hasOwnProperty(UNDERWORLD_LOCATIONS[uwLocationName][0])) {
-      locationsByRoomId['underworld'][UNDERWORLD_LOCATIONS[uwLocationName][0]] = [];
-    }
-    locationsByRoomId['underworld'][UNDERWORLD_LOCATIONS[uwLocationName][0]].push({
-      name: uwLocationName,
-      locationId: Number(locationIds[locationNames.indexOf(uwLocationName)]),
-      roomId: UNDERWORLD_LOCATIONS[uwLocationName][0],
-      mask: UNDERWORLD_LOCATIONS[uwLocationName][1],
-    });
-  });
-
-  Object.keys(OVERWORLD_LOCATIONS).forEach((owLocationName) => {
-    locationsById['overworld'][locationIds[locationNames.indexOf(owLocationName)]] = {
-      name: owLocationName,
-      locationId: Number(locationIds[locationNames.indexOf(owLocationName)]),
-      screenId: OVERWORLD_LOCATIONS[owLocationName],
-      mask: null,
-    };
-
-    if (!locationsByRoomId['overworld'].hasOwnProperty(OVERWORLD_LOCATIONS[owLocationName])) {
-      locationsByRoomId['overworld'][OVERWORLD_LOCATIONS[owLocationName]] = [];
-    }
-    locationsByRoomId['overworld'][OVERWORLD_LOCATIONS[owLocationName]].push({
-      name: owLocationName,
-      locationId: Number(locationIds[locationNames.indexOf(owLocationName)]),
-      screenId: OVERWORLD_LOCATIONS[owLocationName],
-      mask: null,
-    });
-  });
-
-  Object.keys(NPC_LOCATIONS).forEach((npcLocationName) => {
-    locationsById['npc'][locationIds[locationNames.indexOf(npcLocationName)]] = {
-      name: npcLocationName,
-      locationId: Number(locationIds[locationNames.indexOf(npcLocationName)]),
-      screenId: NPC_LOCATIONS[npcLocationName],
-      mask: null,
-    };
-
-    if (!locationsByRoomId['npc'].hasOwnProperty(NPC_LOCATIONS[npcLocationName])) {
-      locationsByRoomId['npc'][NPC_LOCATIONS[npcLocationName]] = [];
-    }
-    locationsByRoomId['npc'][NPC_LOCATIONS[npcLocationName]].push({
-      name: npcLocationName,
-      locationId: Number(locationIds[locationNames.indexOf(npcLocationName)]),
-      screenId: NPC_LOCATIONS[npcLocationName],
-      mask: null,
-    });
-  });
-
-  Object.keys(MISC_LOCATIONS).forEach((miscLocationName) => {
-    locationsById['misc'][locationIds[locationNames.indexOf(miscLocationName)]] = {
-      name: miscLocationName,
-      locationId: Number(locationIds[locationNames.indexOf(miscLocationName)]),
-      roomId: MISC_LOCATIONS[miscLocationName][0],
-      mask: MISC_LOCATIONS[miscLocationName][1],
-    };
-
-    if (!locationsByRoomId['misc'].hasOwnProperty(MISC_LOCATIONS[miscLocationName][0])) {
-      locationsByRoomId['misc'][MISC_LOCATIONS[miscLocationName][0]] = [];
-    }
-    locationsByRoomId['misc'][MISC_LOCATIONS[miscLocationName][0]].push({
-      name: miscLocationName,
-      locationId: Number(locationIds[locationNames.indexOf(miscLocationName)]),
-      roomId: MISC_LOCATIONS[miscLocationName][0],
-      mask: MISC_LOCATIONS[miscLocationName][1],
-    });
-  });
+  // TODO: Write me!
 };
