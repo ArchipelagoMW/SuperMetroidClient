@@ -100,14 +100,14 @@ const createWindow = () => {
 
 app.whenReady().then(async () => {
   // Create the local config file if it does not exist
-  const configPath = path.join(process.env.APPDATA, 'z3client.config.json');
+  const configPath = path.join(process.env.APPDATA, 'super-metroid-client.config.json');
   if (!fs.existsSync(configPath)) {
     fs.writeFileSync(configPath,JSON.stringify({}));
   }
 
   // Load the config into memory
   const config = JSON.parse(fs.readFileSync(configPath).toString());
-  const baseRomHash = '03a63945398191337e896e5771f77173';
+  const baseRomHash = '21f3e98df4780ee1c667b84e57d88675';
 
   // Prompt for base rom file if not present in config, missing from disk, or the hash fails
   if (
@@ -131,7 +131,7 @@ app.whenReady().then(async () => {
 
   // Create a new ROM from the patch file if the patch file is provided and the base rom is known
   for (const arg of process.argv) {
-    if (arg.substr(-5).toLowerCase() === '.apbp') {
+    if (arg.substr(-5).toLowerCase() === '.apm3') {
       if (config.hasOwnProperty('baseRomPath') && fs.existsSync(config.baseRomPath)) {
         if (md5(fs.readFileSync(config.baseRomPath)) !== baseRomHash) {
           dialog.showMessageBoxSync({
