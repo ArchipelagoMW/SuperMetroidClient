@@ -16,10 +16,10 @@ process.on('uncaughtException', (error) => {
 
 // Function to create a log file
 const createLogFile = () => {
-  if (!fs.existsSync(path.join(process.env.APPDATA, 'z3client-logs'))) {
-    fs.mkdirSync(path.join(process.env.APPDATA, 'z3client-logs'));
+  if (!fs.existsSync(path.join(process.env.APPDATA, 'super-metroid-client-logs'))) {
+    fs.mkdirSync(path.join(process.env.APPDATA, 'super-metroid-client-logs'));
   }
-  return fs.openSync(path.join(process.env.APPDATA, 'z3client-logs', `${new Date().getTime()}.txt`), 'w');
+  return fs.openSync(path.join(process.env.APPDATA, 'super-metroid-client-logs', `${new Date().getTime()}.txt`), 'w');
 }
 
 // Create log file for this run
@@ -38,38 +38,38 @@ const launchSNI = () => {
 // Perform certain actions during the install process
 if (require('electron-squirrel-startup')) {
   if (process.platform === 'win32') {
-    // Prepare to add registry entries for .apbp files
+    // Prepare to add registry entries for .apm3 files
     const Registry = require('winreg');
-    const exePath = path.join(process.env.LOCALAPPDATA, 'Archipelago-Z3Client', 'Archipelago-Z3Client.exe');
+    const exePath = path.join(process.env.LOCALAPPDATA, 'Super Metroid Client', 'Super Metroid Client.exe');
 
-    // Set file type description for .apbp files
+    // Set file type description for .apm3 files
     const descriptionKey = new Registry({
       hive: Registry.HKCU,
-      key: '\\Software\\Classes\\archipelago.z3client.v1',
+      key: '\\Software\\Classes\\archipelago.super-metroid-client.v1',
     });
-    descriptionKey.set(Registry.DEFAULT_VALUE, Registry.REG_SZ, 'Archipelago Binary Patch',
+    descriptionKey.set(Registry.DEFAULT_VALUE, Registry.REG_SZ, 'AP Super Metroid Binary Patch',
       (error) => console.error(error));
 
-    // Set icon for .apbp files
+    // Set icon for .apm3 files
     const iconKey = new Registry({
       hive: Registry.HKCU,
-      key: '\\Software\\Classes\\archipelago.z3client.v1\\DefaultIcon',
+      key: '\\Software\\Classes\\archipelago.super-metroid-client.v1\\DefaultIcon',
     });
     iconKey.set(Registry.DEFAULT_VALUE, Registry.REG_SZ, `${exePath},0`, (error) => console.error(error));
 
-    // Set set default program for launching .apbp files (Z3Client)
+    // Set set default program for launching .apm3 files (Super Metroid Client)
     const commandKey = new Registry({
       hive: Registry.HKCU,
-      key: '\\Software\\Classes\\archipelago.z3client.v1\\shell\\open\\command'
+      key: '\\Software\\Classes\\archipelago.super-metroid-client.v1\\shell\\open\\command'
     });
     commandKey.set(Registry.DEFAULT_VALUE, Registry.REG_SZ, `"${exePath}" "%1"`, (error) => console.error(error));
 
-    // Set .apbp files to launch with Z3Client
+    // Set .apm3 files to launch with Super Metroid Client
     const extensionKey = new Registry({
       hive: Registry.HKCU,
-      key: '\\Software\\Classes\\.apbp',
+      key: '\\Software\\Classes\\.apm3',
     });
-    extensionKey.set(Registry.DEFAULT_VALUE, Registry.REG_SZ, 'archipelago.z3client.v1',
+    extensionKey.set(Registry.DEFAULT_VALUE, Registry.REG_SZ, 'archipelago.super-metroid-client.v1',
       (error) => console.error(error));
   }
 
@@ -193,7 +193,7 @@ ipcMain.on('requestSharedData', (event, args) => {
 });
 ipcMain.on('setLauncher', (event, args) => {
   // Allow the user to specify a program to launch the ROM
-  const configPath = path.join(process.env.APPDATA, 'z3client.config.json');
+  const configPath = path.join(process.env.APPDATA, 'super-metroid-client.config.json');
   const config = JSON.parse(fs.readFileSync(configPath).toString());
   const launcherPath = dialog.showOpenDialogSync({
     title: 'Locate ROM Launcher',
