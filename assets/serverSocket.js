@@ -241,7 +241,7 @@ const connectToServer = (address, password = null) => {
               // If the client is currently accepting items, send those items to the ROM
               if (receiveItems) {
                 const receivedItemData = await readFromAddress(RECV_PROGRESS_ADDR + 0x600, 4);
-                const whatIsThis = receivedItemData[0] | (receivedItemData[1] << 8);
+                // const whatIsThis = receivedItemData[0] | (receivedItemData[1] << 8);
                 const receivedItemCount = receivedItemData[2] | (receivedItemData[3] << 8);
 
                 if (receivedItemCount < itemsReceived.length) {
@@ -250,7 +250,7 @@ const connectToServer = (address, password = null) => {
 
                   // In the ROM, "Archipelago" is appended to the list of players, so it is the last entry in the array
                   const playerId = itemsReceived[receivedItemCount].player === 0 ?
-                    players.length - 1 :
+                    players.length :
                     itemsReceived[receivedItemCount].player - 1;
 
                   // Send newly acquired item data to the ROM
