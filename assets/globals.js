@@ -2,7 +2,7 @@
 const CLIENT_VERSION = {
   state: 'Beta',
   major: 0,
-  minor: 14,
+  minor: 10,
   patch: 0,
 };
 
