@@ -40,7 +40,7 @@ if (require('electron-squirrel-startup')) {
   if (process.platform === 'win32') {
     // Prepare to add registry entries for .apm3 files
     const Registry = require('winreg');
-    const exePath = path.join(process.env.LOCALAPPDATA, 'Super Metroid Client', 'Super Metroid Client.exe');
+    const exePath = path.join(process.env.LOCALAPPDATA, 'SuperMetroidClient', 'Super Metroid Client.exe');
 
     // Set file type description for .apm3 files
     const descriptionKey = new Registry({
