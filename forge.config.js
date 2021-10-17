@@ -16,7 +16,7 @@ module.exports = {
         iconUrl: path.join(__dirname, 'icon.ico'),
         setupExe: "Super Metroid Client Setup.exe",
         setupIcon: path.join(__dirname, 'icon.ico'),
-        name: "Super Metroid Client"
+        name: "SuperMetroidClient"
       }
     },
     {
