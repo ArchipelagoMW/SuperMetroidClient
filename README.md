@@ -1,16 +1,16 @@
 # Super Metroid Client
-A Z3 client designed to replace the old Python Z3 client in the Archipelgo MultiWorld ecosystem.
+A Super Metroid client designed for use with the Archipelago MultiWorld ecosystem.
 This is a Node.js program, and uses Electron.
 
 ## Installation
 Installation of this client is optional, but recommended. Installing using the provided executable will allow
-users to launch the client by double-clicking on an `.apbp` file. To install the program, simply run the executable
-file found on the [releases](https://github.com/LegendaryLinux/Archipelago-Z3Client/releases) page, and the software
+users to launch the client by double-clicking on an `.apm3` file. To install the program, simply run the executable
+file found on the [releases](https://github.com/ArchipelagoMW/SuperMetroidClient/releases) page, and the software
 will install to your AppData folder.
 
 You may also run the client as a standalone program, which is available as a `.zip` file on the releases page
 linked above. Doing so will still save some configuration data to your AppData folder, and will require you
-to drag the `.apbp` file onto the executable in order to patch your game.
+to drag the `.apm3` file onto the executable in order to patch your game.
 
 ## Using the Super Metroid Client
 
@@ -20,7 +20,7 @@ to drag the `.apbp` file onto the executable in order to patch your game.
 3. A patched ROM is created automatically in the same location as the patch file.
 4. Your emulator is launched automatically, and the ROM file is loaded.
 5. Run the appropriate LUA file, called `sniConnector.lua`, which is available on the
-   [releases](https://github.com/LegendaryLinux/Archipelago-Z3Client/releases) page.
+   [releases](https://github.com/ArchipelagoMW/SuperMetroidClient/releases) page.
 6. Observe the client will automatically find and select your device.
 7. Enter the address of the Archipelago server into the *Server* box on the client, and press Enter.
 8. Play the game.
@@ -42,5 +42,5 @@ git clone https://github.com/ArchipelagoMW/SuperMetroidClient
 cd SuperMetroidClient
 npm install
 electron-rebuild
-electron .
+npm start
 ```
