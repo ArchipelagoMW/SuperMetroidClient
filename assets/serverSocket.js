@@ -81,10 +81,9 @@ const connectToServer = (address, password = null) => {
           // Update sidebar with info from the server
           document.getElementById('server-version').innerText =
             `${command.version.major}.${command.version.minor}.${command.version.build}`;
-          document.getElementById('forfeit-mode').innerText =
-            command.forfeit_mode[0].toUpperCase() + command.forfeit_mode.substring(1).toLowerCase();
-          document.getElementById('remaining-mode').innerText =
-            command.remaining_mode[0].toUpperCase() + command.remaining_mode.substring(1).toLowerCase();
+          document.getElementById('forfeit-mode').innerText = permissionMap[command.permissions.forfeit];
+          document.getElementById('remaining-mode').innerText = permissionMap[command.permissions.remaining];
+          document.getElementById('collect-mode').innerText = permissionMap[command.permissions.collect];
           hintCost = Number(command.hint_cost);
           document.getElementById('points-per-check').innerText = command.location_check_points.toString();
 
@@ -486,5 +485,15 @@ const sendLocationChecks = (locationIds) => {
 };
 
 const buildItemAndLocationData = (dataPackage) => {
-  // TODO: Write me!
+  Object.values(dataPackage.games).forEach((game) => {
+    // Populate apItemsById
+    Object.keys(game.item_name_to_id).forEach((itemName) => {
+      apItemsById[game.item_name_to_id[itemName]] = itemName;
+    });
+
+    // Populate apLocationsById
+    Object.keys(game.location_name_to_id).forEach((locationName) => {
+      apLocationsById[game.location_name_to_id[locationName]] = locationName;
+    });
+  });
 };

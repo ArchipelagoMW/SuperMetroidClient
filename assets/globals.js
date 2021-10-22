@@ -20,6 +20,14 @@ let lastServerAddress = null;
 let serverPassword = null;
 let serverAuthError = false;
 
+const permissionMap = {
+  0: 'Disabled',
+  1: 'Enabled',
+  2: 'Goal',
+  6: 'Auto',
+  7: 'Enabled + Auto',
+};
+
 // Players in the current game, received from Connected server packet
 let playerSlot = null;
 let playerTeam = null;
