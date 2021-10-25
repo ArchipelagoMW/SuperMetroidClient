@@ -167,7 +167,7 @@ const connectToServer = (address, password = null) => {
               }
 
               // Fetch the current game mode
-              const gameMode = await readFromAddress(WRAM_START + 0x998, 1);
+              const gameMode = await readFromAddress(WRAM_START + 0x0998, 1);
 
               // If the game has been completed
               if (gameMode && ENDGAME_MODES.includes(gameMode)) {
