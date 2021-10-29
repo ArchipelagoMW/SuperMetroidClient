@@ -29,27 +29,27 @@ const logFile = createLogFile();
 const launchSNI = () => {
   const exec = require('child_process').exec;
   let cmd = null;
-  let file = null;
+  let sniBinary = null;
   switch(process.platform){
     case 'win32':
       cmd = 'tasklist';
-      file = 'sni.exe';
+      sniBinary = 'sni.exe';
       break;
     case 'linux':
       cmd = 'ps -A';
-      file = 'sni-linux';
+      sniBinary = 'sni-linux';
       break;
     case 'darwin':
       cmd = 'ps -ax';
-      file = 'sni-darwin';
+      sniBinary = 'sni-darwin';
       break;
     default:
       return;
   }
 
   exec(cmd, (err, stdout, stderr) => {
-    if (stdout.toLowerCase().indexOf(file) === -1) {
-      childProcess.spawn(path.join(__dirname, 'sni', 'sni.exe'), { detached: true });
+    if (stdout.toLowerCase().indexOf(sniBinary) === -1) {
+      childProcess.spawn(path.join(__dirname, 'sni', sniBinary), { detached: true });
     }
   });
 };
