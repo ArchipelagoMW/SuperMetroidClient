@@ -1,6 +1,6 @@
 {
   "name": "super-metroid-client",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "author": "Chris Wilson",
   "description": "A Super Metroid client for Archipelago.",
   "license": "MIT",

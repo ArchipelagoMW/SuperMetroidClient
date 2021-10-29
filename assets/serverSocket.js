@@ -144,7 +144,7 @@ const connectToServer = (address, password = null) => {
           snesInterval = setInterval(async () => {
             try{
               // Prevent the interval from running concurrently with itself. If more than one iteration of this
-              // function is active at any given time, it wil result in reading and writing areas of the SRAM out of
+              // function is active at any given time, it will result in reading and writing areas of the SRAM out of
               // order, causing the item index store in the SRAM to be invalid
               if (!snesIntervalComplete) {
                 return;
@@ -170,7 +170,7 @@ const connectToServer = (address, password = null) => {
               const gameMode = await readFromAddress(WRAM_START + 0x0998, 1);
 
               // If the game has been completed
-              if (gameMode && ENDGAME_MODES.includes(gameMode)) {
+              if (gameMode && ENDGAME_MODES.includes(gameMode[0])) {
                 // Update the gameCompleted status in the client if it has not already been updated
                 if (!gameCompleted) {
                   if (serverSocket && serverSocket.readyState === WebSocket.OPEN) {
