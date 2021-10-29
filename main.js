@@ -28,8 +28,27 @@ const logFile = createLogFile();
 // Function to launch SNI if it is not running
 const launchSNI = () => {
   const exec = require('child_process').exec;
-  exec('tasklist', (err, stdout, stderr) => {
-    if (stdout.search('sni.exe') === -1) {
+  let cmd = null;
+  let file = null;
+  switch(process.platform){
+    case 'win32':
+      cmd = 'tasklist';
+      file = 'sni.exe';
+      break;
+    case 'linux':
+      cmd = 'ps -A';
+      file = 'sni-linux';
+      break;
+    case 'darwin':
+      cmd = 'ps -ax';
+      file = 'sni-darwin';
+      break;
+    default:
+      return;
+  }
+
+  exec(cmd, (err, stdout, stderr) => {
+    if (stdout.toLowerCase().indexOf(file) === -1) {
       childProcess.spawn(path.join(__dirname, 'sni', 'sni.exe'), { detached: true });
     }
   });
