@@ -1,5 +1,6 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const lzma = require('lzma-native');
 const yaml = require('js-yaml');
@@ -11,18 +12,29 @@ const SNI = require('./SNI');
 // Control variable for SNI to prevent multiple rapid launches
 let lastSNILaunchAttempt = 0;
 
+// Determine user's config file path based on OS
+const configDir = (process.platform === 'win32') ?
+  path.join(process.env.APPDATA, 'super-metroid-client-info') : // Windows
+  path.join(os.homedir(), '.super-metroid-client-info'); // Mac + Linux
+if (!fs.existsSync(configDir)) { fs.mkdirSync(configDir, { recursive: true }); }
+const configPath = path.join(configDir, 'super-metroid-client.config.json');
+
+// Determine user's log directory based on OS
+const logDir = (process.platform === 'win32') ?
+  path.join(process.env.APPDATA, 'super-metroid-client-info', 'logs') : // Windows
+  path.join(os.homedir(), '.super-metroid-client-info', 'logs'); // Mac + Linux
+if (!fs.existsSync(logDir)) { fs.mkdirSync(logDir, { recursive: true }); }
+
 // Catch and log any uncaught errors that occur in the main process
 process.on('uncaughtException', (error) => {
-  const logFile = createLogFile();
-  fs.writeFileSync(logFile, `[${new Date().toLocaleString()}] ${JSON.stringify(error)}\n`);
+  const uncaughtLogFile = createLogFile();
+  fs.writeSync(uncaughtLogFile, `[${new Date().toLocaleString()}] ${JSON.stringify(error)}\n`);
+  fs.closeSync(uncaughtLogFile);
 });
 
 // Function to create a log file
 const createLogFile = () => {
-  if (!fs.existsSync(path.join(process.env.APPDATA, 'super-metroid-client-logs'))) {
-    fs.mkdirSync(path.join(process.env.APPDATA, 'super-metroid-client-logs'));
-  }
-  return fs.openSync(path.join(process.env.APPDATA, 'super-metroid-client-logs', `${new Date().getTime()}.txt`), 'w');
+  return fs.openSync(path.join(logDir, `${new Date().getTime()}.txt`), 'w');
 }
 
 // Create log file for this run
@@ -120,14 +132,16 @@ const createWindow = () => {
     },
   });
 
-  win.loadFile('index.html');
+  win.loadFile('index.html').catch((error) => {
+    console.log(error);
+    fs.writeSync(logFile, `[${new Date.toLocaleString()}] ${JSON.stringify(error)}`);
+  });
 };
 
 app.whenReady().then(async () => {
   // Create the local config file if it does not exist
-  const configPath = path.join(process.env.APPDATA, 'super-metroid-client.config.json');
   if (!fs.existsSync(configPath)) {
-    fs.writeFileSync(configPath,JSON.stringify({}));
+    fs.writeFileSync(configPath, JSON.stringify({}));
   }
 
   // Load the config into memory
@@ -218,7 +232,6 @@ ipcMain.on('requestSharedData', (event, args) => {
 });
 ipcMain.on('setLauncher', (event, args) => {
   // Allow the user to specify a program to launch the ROM
-  const configPath = path.join(process.env.APPDATA, 'super-metroid-client.config.json');
   const config = JSON.parse(fs.readFileSync(configPath).toString());
   const launcherPath = dialog.showOpenDialogSync({
     title: 'Locate ROM Launcher',
@@ -245,7 +258,8 @@ try{
   ipcMain.handle('writeToAddress', (event, args) => sni.writeToAddress.apply(sni, args));
 
   fs.writeFileSync(logFile, `[${new Date().toLocaleString()}] Log begins.`);
-  ipcMain.handle('writeToLog', (event, data) => fs.writeFileSync(logFile, `[${new Date().toLocaleString()}] ${data}\n`));
+  ipcMain.handle('writeToLog', (event, data) =>
+    fs.writeFileSync(logFile, `[${new Date().toLocaleString()}] ${data}\n`));
 }catch(error){
   fs.writeFileSync(logFile, `[${new Date().toLocaleString()}] ${JSON.stringify(error)}\n`);
 }
