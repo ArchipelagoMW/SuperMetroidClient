@@ -1,14 +1,17 @@
 {
   "name": "super-metroid-client",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "author": "Chris Wilson",
   "description": "A Super Metroid client for Archipelago.",
   "license": "MIT",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "electron-rebuild": "electron-rebuild",
+    "package-win": "electron-forge package --platform win32 --arch x64",
+    "make-win": "electron-forge make --platform win32 --arch x64",
+    "package-linux": "electron-forge package --platform linux --arch x64",
+    "make-linux": "electron-forge make --platform linux --arch x64"
   },
   "homepage": "https://github.com/ArchipelagoMW/SuperMetroidClient",
   "repository": {

@@ -41,6 +41,6 @@ I am writing this using the latest version of Node.js, but you might be able to 
 git clone https://github.com/ArchipelagoMW/SuperMetroidClient
 cd SuperMetroidClient
 npm install
-electron-rebuild
+npm run electron-rebuild
 npm start
 ```
