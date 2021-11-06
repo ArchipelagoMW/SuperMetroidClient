@@ -161,6 +161,10 @@ const connectToServer = (address, password = null) => {
           playerTeam = command.team;
           playerSlot = command.slot;
 
+          // Determine if DeathLink is enabled
+          const deathLinkFlag = readFromAddress(DEATH_LINK_ACTIVE_ADDR, 1);
+          deathLinkEnabled = (deathLinkFlag[0] === 1);
+
           snesInterval = setInterval(async () => {
             try{
               // Prevent the interval from running concurrently with itself. If more than one iteration of this
@@ -447,8 +451,8 @@ const connectToServer = (address, password = null) => {
           // keep-alive packets can be safely ignored
 
           // DeathLink handling
-          if (command.tags.includes('DeathLink')) {
-            if (command.data.source !== playerSlot) {
+          if (command.tags && command.tags.includes('DeathLink')) {
+            if (deathLinkEnabled && (command.data.source !== playerSlot)) {
               // Notify the player of the DeathLink occurrence, and who is to blame
               const deadPlayer = players.find((player) =>
                 (player.team === playerTeam && player.slot === command.data.source)).alias;

@@ -140,5 +140,5 @@ const killSamus = async () => {
   // TODO: What is this writing, and what is normally stored at that address?
   const killSamusData = new Uint8Array(2);
   killSamusData.set([0, 0]);
-  await writeToAddress(WRAM_START + 0x09C2, );
+  await writeToAddress(WRAM_START + 0x09C2, killSamusData);
 };
