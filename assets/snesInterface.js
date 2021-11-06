@@ -131,3 +131,14 @@ const writeToAddress = (hexOffset, data) => new Promise((resolve, reject) => {
       reject(err);
     });
 });
+
+const killSamus = async () => {
+  // Set Samus as dead, so we don't accept any DeathLink packets
+  samusIsDead = samusIsStillDead = true;
+  lastForcedDeath = new Date().getTime();
+
+  // TODO: What is this writing, and what is normally stored at that address?
+  const killSamusData = new Uint8Array(2);
+  killSamusData.set([0, 0]);
+  await writeToAddress(WRAM_START + 0x09C2, );
+};

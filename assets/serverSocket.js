@@ -28,6 +28,12 @@ const CLIENT_STATUS = {
   CLIENT_GOAL: 30,
 };
 
+// Has DeathLink been enabled?
+let deathLinkEnabled = null;
+let lastForcedDeath = new Date().getTime(); // Tracks the last time a death was send or received over the network
+let samusIsDead = false;
+let samusIsStillDead = false;
+
 window.addEventListener('load', () => {
   // Handle server address change
   document.getElementById('server-address').addEventListener('keydown', async (event) => {
@@ -117,7 +123,7 @@ const connectToServer = (address, password = null) => {
             game: 'Super Metroid',
             name: btoa(new TextDecoder().decode(romName)), // Base64 encoded rom name
             uuid: getClientId(),
-            tags: ['Super Metroid Client'],
+            tags: ['Super Metroid Client', 'DeathLink'],
             password: serverPassword,
             version: ARCHIPELAGO_PROTOCOL_VERSION,
           };
@@ -200,6 +206,38 @@ const connectToServer = (address, password = null) => {
                 snesIntervalComplete = true;
                 return;
               }
+
+              // Check if DeathLink is enabled and Samus is dead
+              if (deathLinkEnabled && samusIsDead) {
+                if (!samusIsStillDead) { // Samus is dead, and it just happened
+                  // Keep track of Samus' state to prevent sending multiple DeathLink signals per death
+                  samusIsStillDead = true;
+                }
+
+                // Check if it has been at least ten seconds since the last DeathLink network signal
+                // was sent or received
+                if (new Date().getTime() > (lastForcedDeath + 10000)) {
+                  if (serverSocket && serverSocket.readyState === WebSocket.OPEN) {
+                    // Samus just died, so ignore any DeathLink signals for the next ten seconds
+                    lastForcedDeath = new Date().getTime();
+                    serverSocket.send(JSON.stringify([{
+                      cmd: 'Bounce',
+                      tags: ['DeathLink'],
+                      data: {
+                        time: Math.floor(lastForcedDeath / 1000), // UNIX Timestamp
+                        source: playerSlot, // Slot of the player who died
+                      }
+                    }]));
+                  }
+
+                  snesIntervalComplete = true;
+                  return;
+                }
+              }
+
+              // Determine if Samus is currently dead
+              samusIsDead = DEATH_MODES.includes(gameMode[0]);
+              if (!samusIsDead) { samusIsStillDead = false; }
 
               // The Super Metroid Randomizer ROM keeps an internal array containing locations which the player
               // has collected the item from. In this section, we scan that array beginning at the index of the last
@@ -405,8 +443,20 @@ const connectToServer = (address, password = null) => {
           break;
 
         case 'Bounced':
-          // This is a response to a makeshift keep-alive packet requested every five minutes.
-          // Nothing needs to be done in response to this message
+          // This command can be used for a variety of things. Currently, it is used for keep-alive and DeathLink.
+          // keep-alive packets can be safely ignored
+
+          // DeathLink handling
+          if (command.tags.includes('DeathLink')) {
+            if (command.data.source !== playerSlot) {
+              // Notify the player of the DeathLink occurrence, and who is to blame
+              const deadPlayer = players.find((player) =>
+                (player.team === playerTeam && player.slot === command.data.source)).alias;
+              appendConsoleMessage(`${deadPlayer} has died, and took you with them.`);
+              await killSamus();
+            }
+          }
+
           break;
 
         default:
