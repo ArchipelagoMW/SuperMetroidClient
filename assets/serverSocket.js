@@ -229,7 +229,8 @@ const connectToServer = (address, password = null) => {
                       tags: ['DeathLink'],
                       data: {
                         time: Math.floor(lastForcedDeath / 1000), // UNIX Timestamp
-                        source: playerSlot, // Slot of the player who died
+                        source: players.find((player) =>
+                          (player.team === playerTeam && player.slot === command.data.source)).alias,
                       }
                     }]));
                   }
@@ -452,11 +453,12 @@ const connectToServer = (address, password = null) => {
 
           // DeathLink handling
           if (command.tags && command.tags.includes('DeathLink')) {
-            if (deathLinkEnabled && (command.data.source !== playerSlot)) {
+            // Has it been at least ten seconds since the last time Samus was forcibly killed?
+            if (deathLinkEnabled && (new Date().getTime() > (lastForcedDeath + 10000))) {
               // Notify the player of the DeathLink occurrence, and who is to blame
-              const deadPlayer = players.find((player) =>
-                (player.team === playerTeam && player.slot === command.data.source)).alias;
-              appendConsoleMessage(`${deadPlayer} has died, and took you with them.`);
+              appendConsoleMessage(`${command.data.source} has died, and took you with them.`);
+
+              // Kill Samus
               await killSamus();
             }
           }
